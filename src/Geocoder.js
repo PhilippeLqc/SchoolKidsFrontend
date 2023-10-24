@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import "./Geocoder.css";
 
-//TODO : revoir les state pour concorder avec le backend
+//TODO : revoir le bouton searchbox pour le backend afin de le faire foncitonner
 function Geocoder(props) {
   const accessToken = process.env.REACT_APP_MAPBOX_TOKEN;
   const [value, setValue] = useState("");
@@ -18,7 +18,7 @@ function Geocoder(props) {
     lng: 0,
     lat: 0,
   });
-  const [schoolType, setSchoolType] = useState("MATERNELLE");
+  const [schoolType, setSchoolType] = useState("maternelle");
   const [schoolStatus, setSchoolStatus] = useState("Public");
   const [distance, setDistance] = useState("1");
 
@@ -105,10 +105,10 @@ function Geocoder(props) {
           value={schoolType}
           onChange={handleSchoolTypeChange}
         >
-          <MenuItem value="MATERNELLE">Maternelle</MenuItem>
-          <MenuItem value="PRIMAIRE">Élémentaire</MenuItem>
-          <MenuItem value="COLLEGE">Collège</MenuItem>
-          <MenuItem value="LYCEE">Lycée</MenuItem>
+          <MenuItem value="maternelle">Maternelle</MenuItem>
+          <MenuItem value="primaire">Primaire</MenuItem>
+          <MenuItem value="collège">Collège</MenuItem>
+          <MenuItem value="lycée">Lycée</MenuItem>
         </Select>
       </FormControl>
 
