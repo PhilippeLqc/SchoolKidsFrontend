@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import "./Geocoder.css";
 
+//TODO : revoir les state pour concorder avec le backend
 function Geocoder(props) {
   const accessToken = process.env.REACT_APP_MAPBOX_TOKEN;
   const [value, setValue] = useState("");
@@ -17,8 +18,8 @@ function Geocoder(props) {
     lng: 0,
     lat: 0,
   });
-  const [schoolType, setSchoolType] = useState("maternelle");
-  const [schoolStatus, setSchoolStatus] = useState("école-publique");
+  const [schoolType, setSchoolType] = useState("MATERNELLE");
+  const [schoolStatus, setSchoolStatus] = useState("Public");
   const [distance, setDistance] = useState("1");
 
   const handleChange = (e) => {
@@ -65,13 +66,30 @@ function Geocoder(props) {
       distance: distance,
       adresse: address,
     };
+
+    fetch(
+      `http://localhost:8080/school/findSchool?lng=${coordinates.lng}&lat=${coordinates.lat}&schoolType=${schoolType}&schoolStatus=${schoolStatus}&distance=${distance}`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      }
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data:", data);
+      })
+      .catch((error) => {
+        console.error("could'nt catch data:", error);
+      });
+
     console.log("selectedInfo on geocoder", selectedInfo);
     props.onRetrieve(selectedInfo);
+    // props.onRetrieve(selectedInfo);
   };
 
-  useEffect(() => {
-    props.onCoordinatesChange(coordinates);
-  }, [coordinates]);
+  // useEffect(() => {
+  //   props.onCoordinatesChange(coordinates);
+  // }, [coordinates]);
 
   // console.log("address", address);
   // console.log("coordinates", coordinates);
@@ -87,26 +105,24 @@ function Geocoder(props) {
           value={schoolType}
           onChange={handleSchoolTypeChange}
         >
-          <MenuItem value="maternelle">Maternelle</MenuItem>
-          <MenuItem value="élémentaire">Élémentaire</MenuItem>
-          <MenuItem value="collège">Collège</MenuItem>
-          <MenuItem value="lycée">Lycée</MenuItem>
+          <MenuItem value="MATERNELLE">Maternelle</MenuItem>
+          <MenuItem value="PRIMAIRE">Élémentaire</MenuItem>
+          <MenuItem value="COLLEGE">Collège</MenuItem>
+          <MenuItem value="LYCEE">Lycée</MenuItem>
         </Select>
       </FormControl>
 
       <FormControl variant="outlined" sx={{ m: 1, minWidth: 240 }} size="small">
-        <InputLabel id="school-public-label">
-          École publique ou privée
-        </InputLabel>
+        <InputLabel id="school-public-label">École publique/privée</InputLabel>
         <Select
           labelId="school-public-label"
           id="school-public"
-          label="École publique ou privée"
+          label="École publique/privée"
           value={schoolStatus}
           onChange={handleSchoolStatusChange}
         >
           <MenuItem value="Public">publique</MenuItem>
-          <MenuItem value="Privée">privée</MenuItem>
+          <MenuItem value="Privé">privée</MenuItem>
         </Select>
       </FormControl>
 

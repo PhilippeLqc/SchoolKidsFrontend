@@ -30,39 +30,48 @@ export default function MapGL() {
       setLat(map.current.getCenter().lat.toFixed(4));
       setZoom(map.current.getZoom().toFixed(2));
     });
+
+    // Add navigation control (the +/- zoom buttons)
+    map.current.addControl(new mapboxgl.NavigationControl(), "bottom-right");
   }, [lng, lat, zoom]);
 
-  //import coordinates from Geocoder.js and fly to new coordinates
-  const handleCoordinatesChange = (newCoordinates) => {
-    if (
-      newCoordinates &&
-      newCoordinates.lng !== 0 &&
-      newCoordinates.lat !== 0
-    ) {
-      //change coordinates in state (lng & lat) with the coordinates from Geocoder.js
-      setLng(newCoordinates.lng);
-      setLat(newCoordinates.lat);
-
-      //flyto new coordinates
-      map.current.flyTo({
-        center: [newCoordinates.lng, newCoordinates.lat],
-        zoom: 16,
-        essential: true,
-        duration: 5000,
-      });
-    }
-  };
+  //import coordinates from Geocoder.js
+  // const handleCoordinatesChange = (newCoordinates) => {
+  //   if (
+  //     newCoordinates &&
+  //     newCoordinates.lng !== 0 &&
+  //     newCoordinates.lat !== 0
+  //   ) {
+  //     //change coordinates in state (lng & lat) with the coordinates from Geocoder.js
+  //     setLng(newCoordinates.lng);
+  //     setLat(newCoordinates.lat);
+  //   }
+  // };
 
   const handleRetrieve = (selectedInfo) => {
+    //initial marker
     marker.current = new mapboxgl.Marker({
       color: "yellow",
-      draggable: true,
+      draggable: false,
     })
       .setLngLat([selectedInfo.lng, selectedInfo.lat])
-      .setPopup(
-        new mapboxgl.Popup().setHTML(`<h1>${selectedInfo.adresse}</h1>`)
-      )
       .addTo(map.current);
+
+    //add marker from the fetch coordinates
+    // marker.current = new mapboxgl.Marker({
+    //   color: "red",
+    //   draggable: false,
+    // })
+    //   .setLngLat([data.lng, data.lat])
+    //   .addTo(map.current);
+
+    //flyto initial marker coordinates
+    map.current.flyTo({
+      center: [selectedInfo.lng, selectedInfo.lat],
+      zoom: 14,
+      essential: true,
+      duration: 5000,
+    });
 
     // TODO : Faire quelques chose avec les infos récupérées - à voir avec le back
     console.log("selectedInfo on MapboxGL", selectedInfo);
@@ -74,7 +83,7 @@ export default function MapGL() {
         <div ref={mapContainer} className="map-container" />
         <div>
           <Geocoder
-            onCoordinatesChange={handleCoordinatesChange}
+            // onCoordinatesChange={handleCoordinatesChange}
             onRetrieve={handleRetrieve}
           />
         </div>
