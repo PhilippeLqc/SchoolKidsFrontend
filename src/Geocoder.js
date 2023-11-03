@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { SearchBox } from "@mapbox/search-js-react";
 import {
   FormControl,
@@ -9,90 +9,68 @@ import {
 } from "@mui/material";
 import "./Geocoder.css";
 
-//TODO : revoir le bouton searchbox pour le backend afin de le faire foncitonner
+//TODO : revoir la doc mui material pour les select et les input afin de delete les warnings
 function Geocoder(props) {
   const accessToken = process.env.REACT_APP_MAPBOX_TOKEN;
   const [value, setValue] = useState("");
-  const [address, setAddress] = useState("");
-  const [coordinates, setCoordinates] = useState({
+  const [selectedInfo, setSelectedInfo] = useState({
     lng: 0,
     lat: 0,
+    schoolType: "",
+    schoolStatus: "",
+    distance: "",
+    adresse: "",
+    city: "",
   });
-  const [schoolType, setSchoolType] = useState("maternelle");
-  const [schoolStatus, setSchoolStatus] = useState("Public");
-  const [distance, setDistance] = useState("1");
 
   const handleChange = (e) => {
     setValue(e);
   };
 
-  const handleSchoolTypeChange = (event) => {
-    setSchoolType(event.target.value);
-  };
-
-  const handleSchoolStatusChange = (event) => {
-    setSchoolStatus(event.target.value);
-  };
-
-  const handleDistanceChange = (event) => {
-    setDistance(event.target.value);
+  const handleInfoChange = (e) => {
+    setSelectedInfo({
+      ...selectedInfo,
+      [e.target.name]: e.target.value,
+    });
   };
 
   const handleRetrieve = (suggestions) => {
-    // console.log("suggestions", suggestions);
-
-    // check if suggestions is true
     if (suggestions) {
       // console.log(" suggestions true");
-
-      //save the coordinates in the State coordinates
-      setCoordinates({
+      //save the coordinates in the State selectedInfo
+      setSelectedInfo({
+        ...selectedInfo,
         lng: suggestions.features[0].geometry.coordinates[0],
         lat: suggestions.features[0].geometry.coordinates[1],
+        adresse: suggestions.features[0].properties.full_address,
+        city: suggestions.features[0].properties.context.place.name,
       });
-
-      //save the address in the State address
-      setAddress(suggestions.features[0].properties.full_address);
+    } else {
+      alert("Veuillez entrer une adresse valide (adresse + ville)");
     }
   };
 
-  //create a new object with the coordinates and the selected informations
-  const handleresearch = () => {
-    const selectedInfo = {
-      lng: coordinates.lng,
-      lat: coordinates.lat,
-      schoolType: schoolType,
-      schoolStatus: schoolStatus,
-      distance: distance,
-      adresse: address,
-    };
+  const handleresearch = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:8080/school/findSchool?lng=${selectedInfo.lng}&lat=${selectedInfo.lat}&schoolType=${selectedInfo.schoolType}&schoolStatus=${selectedInfo.schoolStatus}&distance=${selectedInfo.distance}&city=${selectedInfo.city}`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
 
-    fetch(
-      `http://localhost:8080/school/findSchool?lng=${coordinates.lng}&lat=${coordinates.lat}&schoolType=${schoolType}&schoolStatus=${schoolStatus}&distance=${distance}`,
-      {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
+      if (response.ok) {
+        const data = await response.json();
+        console.log("data school:", data);
+        props.onRetrieve(selectedInfo);
+      } else {
+        console.error("Response not OK:", response.status);
       }
-    )
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("data:", data);
-      })
-      .catch((error) => {
-        console.error("could'nt catch data:", error);
-      });
-
-    console.log("selectedInfo on geocoder", selectedInfo);
-    props.onRetrieve(selectedInfo);
-    // props.onRetrieve(selectedInfo);
+    } catch (error) {
+      console.error("An error occurred:", error);
+    }
   };
-
-  // useEffect(() => {
-  //   props.onCoordinatesChange(coordinates);
-  // }, [coordinates]);
-
-  // console.log("address", address);
-  // console.log("coordinates", coordinates);
 
   return (
     <div className="main-geocoder">
@@ -102,13 +80,14 @@ function Geocoder(props) {
           labelId="school-type-label"
           id="school-type"
           label="Type d'écoles"
-          value={schoolType}
-          onChange={handleSchoolTypeChange}
+          name="schoolType"
+          onChange={handleInfoChange}
         >
-          <MenuItem value="maternelle">Maternelle</MenuItem>
-          <MenuItem value="primaire">Primaire</MenuItem>
-          <MenuItem value="collège">Collège</MenuItem>
-          <MenuItem value="lycée">Lycée</MenuItem>
+          <MenuItem value="Maternelle">Maternelle</MenuItem>
+          <MenuItem value="Elementaire">Elémentaire</MenuItem>
+          <MenuItem value="Primaire">Primaire</MenuItem>
+          <MenuItem value="College">Collège</MenuItem>
+          <MenuItem value="Lycee">Lycée</MenuItem>
         </Select>
       </FormControl>
 
@@ -118,8 +97,8 @@ function Geocoder(props) {
           labelId="school-public-label"
           id="school-public"
           label="École publique/privée"
-          value={schoolStatus}
-          onChange={handleSchoolStatusChange}
+          name="schoolStatus"
+          onChange={handleInfoChange}
         >
           <MenuItem value="Public">publique</MenuItem>
           <MenuItem value="Privé">privée</MenuItem>
@@ -132,8 +111,8 @@ function Geocoder(props) {
           labelId="distance-label"
           id="distance"
           label="Distance maximum (km)"
-          value={distance}
-          onChange={handleDistanceChange}
+          name="distance"
+          onChange={handleInfoChange}
         >
           <MenuItem value="1">1 km</MenuItem>
           <MenuItem value="5">5 km</MenuItem>
@@ -144,10 +123,14 @@ function Geocoder(props) {
       <form>
         <SearchBox
           accessToken={accessToken}
-          placeholder="adresse ou code postal"
+          placeholder="adresse complète"
           value={value}
           onChange={handleChange}
           onRetrieve={handleRetrieve}
+          options={{
+            language: "fr",
+            country: "FR",
+          }}
         />
       </form>
       <Button
